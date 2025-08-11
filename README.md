@@ -115,6 +115,56 @@ pixi run env-status
 pixi run env-start
 ```
 
+## Data Directory Management Strategy
+
+### Build vs Release Management
+
+```
+data/
+├── build/          # All builds, tests, and temporary artifacts (gitignored)
+└── release/        # Manually published releases (tracked in git)
+```
+
+#### Build Directory (`data/build/`)
+- **Purpose**: Contains all build artifacts, test results, and temporary files
+- **Git Status**: Completely ignored by git (via `.gitignore`)
+- **Lifecycle**: Generated on-demand, can be safely deleted anytime
+- **Contents**: 
+  - Build manifests and logs
+  - Test artifacts and results (including M7 tests)
+  - Temporary processing files
+  - DCF analysis outputs
+  - Any other transient build data
+
+#### Release Directory (`data/release/`)
+- **Purpose**: Contains manually published, stable releases
+- **Git Status**: Tracked in version control
+- **Lifecycle**: Only updated through manual release process
+- **Contents**: 
+  - Curated build artifacts ready for production use
+  - Stable DCF reports
+  - Release notes and metadata
+  - Validated datasets
+
+### Data Flow Management
+
+1. **Development**: All builds go to `data/build/` (ignored by git)
+2. **Testing**: M7 and other tests generate artifacts in `data/build/`
+3. **PR Workflow**: Script asks if you want to promote latest build to `data/release/`
+4. **Release**: Manual script copies selected builds from `build/` to `release/`
+
+### Commands
+- `pixi run build-dataset m7` → Creates artifacts in `data/build/`
+- `pixi run create-pr "title" N` → Asks about promoting to release
+- `pixi run release-build BUILD_ID` → Manually release a build (future)
+
+### Benefits
+- **Clean Git History**: Build artifacts don't pollute git status
+- **Flexible Testing**: Tests can generate unlimited artifacts without git issues  
+- **Controlled Releases**: Only validated builds make it to release directory
+- **Easy Cleanup**: `rm -rf data/build/` safely removes all temporary files
+- **Debugging**: Failed builds preserved in place for investigation
+
 ## One Codebase, Multiple Configurations
 
 All datasets use the same codebase with different configuration files:
